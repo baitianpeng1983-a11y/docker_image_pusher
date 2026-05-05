@@ -1,0 +1,22 @@
+name: Sync OpenClaw to Aliyun ACR
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Aliyun ACR
+        run: |
+          echo "${{ secrets.ALIYUN_REGISTRY_PASSWORD }}" | \
+          docker login --username "${{ secrets.ALIYUN_REGISTRY_USER }}" \
+          --password-stdin "${{ secrets.ALIYUN_REGISTRY }}"
+
+      - name: Pull, tag, and push
+        run: |
+          SOURCE_IMAGE="ghcr.io/openclaw/openclaw:latest"
+          TARGET_IMAGE="${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAME_SPACE }}/openclaw:latest"
+          docker pull $SOURCE_IMAGE
+          docker tag $SOURCE_IMAGE $TARGET_IMAGE
+          docker push $TARGET_IMAGE
