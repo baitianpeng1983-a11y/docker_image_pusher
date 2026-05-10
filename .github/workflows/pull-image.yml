@@ -1,0 +1,31 @@
+name: Pull Docker Image to ACR
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_image:
+        description: '源镜像地址'
+        required: true
+        default: 'ghcr.io/home-assistant/home-assistant:stable'
+      target_name:
+        description: '目标镜像名'
+        required: true
+        default: 'home-assistant'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Aliyun ACR
+        run: |
+          echo "${{ secrets.ALIYUN_REGISTRY_PASSWORD }}" | \
+          docker login --username "${{ secrets.ALIYUN_REGISTRY_USER }}" \
+          --password-stdin "${{ secrets.ALIYUN_REGISTRY }}"
+
+      - name: Pull, tag, and push
+        run: |
+          SOURCE="${{ github.event.inputs.source_image }}"
+          TARGET="${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAME_SPACE }}/${{ github.event.inputs.target_name }}:${SOURCE##*:}"
+          docker pull $SOURCE
+          docker tag $SOURCE $TARGET
+          docker push $TARGET
